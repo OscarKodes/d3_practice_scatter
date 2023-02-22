@@ -4,8 +4,8 @@ const width = window.innerWidth * 0.8;
 
 const margin = {
     top: 50,
-    left: 50,
-    right: 200,
+    left: 80,
+    right: 50,
     bottom: 50
   };
 
@@ -14,27 +14,36 @@ const margin = {
 d3.csv("cleaned_data.csv", d3.autoType).then(data => {
 
     console.log(data);
-//   /* SCALES ##################################################### */
 
-//   const xScale = d3.scaleLinear()
-//     .domain([0, d3.max(data.map(d => d["Rotten Tomatoes Ratings %"]))])
-//     .range([margin.left, width - margin.right])
+    // Remove the first 5 outliers with high mileage. 
+    // (It skews the x-axis, shoving all the other datapoints to the left.)
+    data = data.sort((a, b) => b.mileage - a.mileage).slice(5);
 
-//   const yScale = d3.scaleLinear()
-//     .domain([0, d3.max(data, d => d["Audience Ratings %"])])
-//     .range([height - margin.top, margin.bottom])
 
-//   // Placing genres and colors in variables to be reused in colorScale & Legend
-//   const allGenres = ["Comedy", "Drama", "Adventure", "Thriller", "Horror", "Action", "Romance"];
-//   const allColors = ["Yellow", "Red", "Green", "Purple", "Black", "Blue", "Pink"];
+  /* SCALES ##################################################### */
 
-//   const colorScale = d3.scaleOrdinal()
-//     .domain(allGenres)
-//     .range(allColors)
 
-//   const sizeScale = d3.scaleSqrt()
-//     .domain([1, d3.max(data, d => d["Budget (million $)"])])
-//     .range([3, 16]);
+  const xScale = d3.scaleLinear()
+    .domain([0, d3.max(data.map(d => d.mileage))])
+    .range([margin.left, width - margin.right])
+
+  const yScale = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.price)])
+    .range([height - margin.top, margin.bottom])
+
+  console.log()
+
+  // Placing brands and colors in variables to be reused in colorScale & Legend
+  const allBrands = Array.from(new Set(data.map(d => d.brand)));
+  const allColors = d3.schemeCategory10;
+
+  const colorScale = d3.scaleOrdinal()
+    .domain(allBrands)
+    .range(allColors)
+
+  // const sizeScale = d3.scaleSqrt()
+  //   .domain([1, d3.max(data, d => d["Budget (million $)"])])
+  //   .range([3, 16]);
 
 
 //   /* HTML ELEMENTS ############################################## */
@@ -44,55 +53,47 @@ d3.csv("cleaned_data.csv", d3.autoType).then(data => {
     .append("svg")
     .attr("width", width)
     .attr("height", height)
-    .style("background-color", "lavender")
+    // .style("background-color", "lavender")
 
-//   // AXIS TICKS  ----------------------------------------------
-//   svg.append("g")
-//     .attr("transform", `translate(0,${height - margin.top})`)
-//     .call(d3.axisBottom(xScale));
+  // AXIS TICKS  ----------------------------------------------
+  svg.append("g")
+    .attr("transform", `translate(0,${height - margin.top})`)
+    .call(d3.axisBottom(xScale));
   
-//   svg.append("g")
-//     .attr("transform", `translate(${margin.bottom},0)`)
-//     .call(d3.axisLeft(yScale));
+  svg.append("g")
+    .attr("transform", `translate(${margin.left}, ${0})`)
+    .call(d3.axisLeft(yScale));
 
-//   // AXIS LABELS ----------------------------------------------
-//   svg.append("text")
-//     .attr("text-anchor", "end")
-//     .attr("x", width / 2 + margin.left * 2)
-//     .attr("y", height - 6)
-//     .style("font-weight", "bold")
-//     .style("font-size", "1.2rem")
-//     .text("Rotten Tomatoes Ratings %");
+  // AXIS LABELS ----------------------------------------------
+  svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("x", width / 2 + margin.left)
+    .attr("y", height - 6)
+    .style("font-weight", "bold")
+    .style("font-size", "1.2rem")
+    .text("Mileage");
 
-//   svg.append("text")
-//     .attr("text-anchor", "end")
-//     .attr("x", -height / 2 + margin.left * 2)
-//     .attr("y", 15)
-//     .style("font-weight", "bold")
-//     .style("font-size", "1.2rem")
-//     .attr("transform", "rotate(-90)")
-//     .text("Audience Ratings %");
+  svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("x", -height / 2 + margin.left)
+    .attr("y", 25)
+    .style("font-weight", "bold")
+    .style("font-size", "1.2rem")
+    .attr("transform", "rotate(-90)")
+    .text("Price (USD)");
 
-//   // DOTS FOR SCATTERPLOT ----------------------------------
-//   const dot = svg
-//     .selectAll(".dot") // Line below sorts films by largest budget to smallest, so small dots appear on top
-//     .data(data.sort((a, b) => b["Budget (million $)"] - a["Budget (million $)"])) 
-//     .join(
-//       enter => enter
-//         .append("circle")
-//           .attr("class", "dot")
-//           .attr("transform", `translate(${margin.left}, ${height - margin.top})`)
-//           .attr("r", d => sizeScale(d["Budget (million $)"]))
-//           .attr("fill", d => colorScale(d.Genre))
-//           .attr("stroke", "black")
-//           .attr("opacity", "0.4")
-//           .on("mouseover", tipMouseover)
-//           .on("mouseout", tipMouseout)
-//         .call(enter => enter
-//           .transition()
-//             .duration(1500)
-//             .delay((d, i) => yScale(d["Audience Ratings %"]) + i * 2)
-//             .attr("transform", d => `translate(${xScale(d["Rotten Tomatoes Ratings %"])}, ${yScale(d["Audience Ratings %"])})`)
-//         )
-//     );
+  // DOTS FOR SCATTERPLOT ----------------------------------
+
+
+
+  const dot = svg
+    .selectAll(".dot") 
+    .data(data)
+    .join("circle")
+    .attr("class", "dot")
+    .attr("transform", d => `translate(${xScale(d.mileage)}, ${yScale(d.price)})`)
+    .attr("r", 5)
+    .attr("fill", d => colorScale(d.brand))
+    .attr("stroke", "black")
+    .attr("opacity", "0.4");
 });
