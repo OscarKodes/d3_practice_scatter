@@ -131,4 +131,29 @@ d3.csv("cleaned_data.csv", d3.autoType).then(data => {
     .attr("fill", d => colorScale(d.brand))
     .attr("stroke", "black")
     .attr("opacity", "0.5");
+
+    // ============================================
+
+    // // set default arrows on tool tips
+    // tippy.setDefaults({
+    //   "arrow": true
+    // })
+
+    // set the tooltip content
+    dot
+      .attr("allowHTML", true)
+      .attr("data-tippy-content", d => {
+
+        let brand = d.brand[0].toUpperCase() + d.brand.slice(1);
+        let price = d.price;
+        let miles = d.mileage;
+
+        let txt = `${brand} ($${price}) (${miles} miles)`
+
+        return txt;
+      })
+
+
+    // call tippy on the dots
+    tippy(dot.nodes());
 });
